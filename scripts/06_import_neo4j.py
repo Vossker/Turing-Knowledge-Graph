@@ -2,9 +2,15 @@ import json
 from pathlib import Path
 from neo4j import GraphDatabase
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+if PROJECT_ROOT.name == "scripts":
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+
 URI = "bolt://localhost:7687"
 USER = "neo4j"
-PASSWORD = "你的密码"
+PASSWORD = "12345678"
 DATABASE = "neo4j"
 
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
@@ -43,6 +49,14 @@ def safe_label(label: str) -> str:
 
 def safe_relation(rel: str) -> str:
     return rel if rel in ALLOWED_RELATIONS else "RELATED_TO"
+
+
+def initialize_schema(tx):
+    tx.run("""
+    CREATE CONSTRAINT entity_name_unique IF NOT EXISTS
+    FOR (n:Entity)
+    REQUIRE n.name IS UNIQUE
+    """)
 
 
 def create_entity(tx, name, label):
@@ -86,9 +100,10 @@ def create_relation(tx, triple):
     )
 
 
-triples = json.loads(Path("data/processed/triples_final.json").read_text(encoding="utf-8"))
+triples = json.loads((PROCESSED_DIR / "triples_final.json").read_text(encoding="utf-8"))
 
 with driver.session(database=DATABASE) as session:
+    session.execute_write(initialize_schema)
     for t in triples:
         session.execute_write(create_entity, t["head"], t["head_label"])
         session.execute_write(create_entity, t["tail"], t["tail_label"])

@@ -4,8 +4,12 @@ import json
 
 nlp = spacy.load("en_core_web_sm")
 
-RAW_DIR = Path("data/raw")
-PROCESSED_DIR = Path("data/processed")
+PROJECT_ROOT = Path(__file__).resolve().parent
+if PROJECT_ROOT.name == "scripts":
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+RAW_DIR = PROJECT_ROOT / "data" / "raw"
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 sentences = []
@@ -22,7 +26,7 @@ for file in RAW_DIR.glob("*.txt"):
                 "sentence": s
             })
 
-Path("data/processed/sentences.json").write_text(
+(PROCESSED_DIR / "sentences.json").write_text(
     json.dumps(sentences, ensure_ascii=False, indent=2),
     encoding="utf-8"
 )

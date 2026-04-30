@@ -5,6 +5,12 @@ from spacy.matcher import PhraseMatcher
 
 nlp = spacy.load("en_core_web_sm")
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+if PROJECT_ROOT.name == "scripts":
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+
 DOMAIN_TERMS = {
     "Turing Machine": "Concept",
     "Universal Turing Machine": "Concept",
@@ -53,7 +59,7 @@ def map_spacy_label(label: str) -> str:
     return mapping.get(label, "Entity")
 
 
-sentences = json.loads(Path("data/processed/sentences.json").read_text(encoding="utf-8"))
+sentences = json.loads((PROCESSED_DIR / "sentences.json").read_text(encoding="utf-8"))
 
 entities = []
 
@@ -90,7 +96,7 @@ for item in sentences:
             "method": "dictionary"
         })
 
-Path("data/processed/entities_raw.json").write_text(
+(PROCESSED_DIR / "entities_raw.json").write_text(
     json.dumps(entities, ensure_ascii=False, indent=2),
     encoding="utf-8"
 )

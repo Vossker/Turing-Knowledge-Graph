@@ -1,9 +1,13 @@
 import json
-import re
 from pathlib import Path
-from itertools import combinations
 
-entities = json.loads(Path("data/processed/entities_normalized.json").read_text(encoding="utf-8"))
+PROJECT_ROOT = Path(__file__).resolve().parent
+if PROJECT_ROOT.name == "scripts":
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+
+entities = json.loads((PROCESSED_DIR / "entities_normalized.json").read_text(encoding="utf-8"))
 
 # 按句子聚合实体
 sent_to_entities = {}
@@ -67,6 +71,64 @@ RELATION_PATTERNS = [
         "keywords": ["related to", "associated with", "concerned with", "central to"],
         "head_type": None,
         "tail_type": None
+    },
+]
+
+MANUAL_HIGH_CONFIDENCE = [
+    {
+        "head": "Alan Turing",
+        "head_label": "Person",
+        "relation": "PROPOSED",
+        "tail": "Turing Machine",
+        "tail_label": "Concept",
+        "sentence": "Turing machines were first described by Alan Turing in 1936-7.",
+        "source": "domain_rule",
+        "confidence": 0.95,
+        "method": "curated_rule"
+    },
+    {
+        "head": "Alan Turing",
+        "head_label": "Person",
+        "relation": "PROPOSED",
+        "tail": "Turing Test",
+        "tail_label": "Concept",
+        "sentence": "Turing introduced the imitation game, later known as the Turing Test.",
+        "source": "domain_rule",
+        "confidence": 0.95,
+        "method": "curated_rule"
+    },
+    {
+        "head": "Alan Turing",
+        "head_label": "Person",
+        "relation": "WORKED_AT",
+        "tail": "Bletchley Park",
+        "tail_label": "Organization",
+        "sentence": "Turing worked at Bletchley Park during World War II.",
+        "source": "domain_rule",
+        "confidence": 0.95,
+        "method": "curated_rule"
+    },
+    {
+        "head": "Alan Turing",
+        "head_label": "Person",
+        "relation": "DESIGNED",
+        "tail": "Automatic Computing Engine",
+        "tail_label": "Machine",
+        "sentence": "Turing designed the Automatic Computing Engine at the National Physical Laboratory.",
+        "source": "domain_rule",
+        "confidence": 0.95,
+        "method": "curated_rule"
+    },
+    {
+        "head": "Turing Machine",
+        "head_label": "Concept",
+        "relation": "RELATED_TO",
+        "tail": "Computability",
+        "tail_label": "Concept",
+        "sentence": "Turing machines are abstract computational devices used to investigate what can be computed.",
+        "source": "domain_rule",
+        "confidence": 0.95,
+        "method": "curated_rule"
     },
 ]
 
@@ -134,9 +196,26 @@ for t in triples:
         seen.add(key)
         dedup.append(t)
 
-Path("data/processed/triples_raw.json").write_text(
+(PROCESSED_DIR / "triples_raw.json").write_text(
     json.dumps(dedup, ensure_ascii=False, indent=2),
     encoding="utf-8"
 )
 
+all_triples = dedup + MANUAL_HIGH_CONFIDENCE
+
+seen = set()
+final_triples = []
+
+for t in all_triples:
+    key = (t["head"], t["relation"], t["tail"])
+    if key not in seen:
+        seen.add(key)
+        final_triples.append(t)
+
+(PROCESSED_DIR / "triples_final.json").write_text(
+    json.dumps(final_triples, ensure_ascii=False, indent=2),
+    encoding="utf-8"
+)
+
 print("Triples:", len(dedup))
+print("Final triples:", len(final_triples))

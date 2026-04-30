@@ -3,6 +3,12 @@ import re
 from pathlib import Path
 from rapidfuzz import process, fuzz
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+if PROJECT_ROOT.name == "scripts":
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
+
 ALIASES = {
     "Alan Mathison Turing": "Alan Turing",
     "Turing": "Alan Turing",
@@ -95,7 +101,7 @@ def context_disambiguate(name: str, label: str, sentence: str) -> tuple[str, str
     return name, label
 
 
-raw_entities = json.loads(Path("data/processed/entities_raw.json").read_text(encoding="utf-8"))
+raw_entities = json.loads((PROCESSED_DIR / "entities_raw.json").read_text(encoding="utf-8"))
 
 normalized = []
 
@@ -126,7 +132,7 @@ for e in normalized:
     else:
         e["canonical_name"] = e["name"]
 
-Path("data/processed/entities_normalized.json").write_text(
+(PROCESSED_DIR / "entities_normalized.json").write_text(
     json.dumps(normalized, ensure_ascii=False, indent=2),
     encoding="utf-8"
 )
